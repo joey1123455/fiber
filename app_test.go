@@ -1905,3 +1905,56 @@ func Test_Route_Naming_Issue_2671(t *testing.T) {
 	postGroup.Post("", emptyHandler).Name("post.update")
 	utils.AssertEqual(t, "/post/:postId", app.GetRoute("post.update").Path)
 }
+
+// go test -run Test_App_Domain_Without_Params -v
+func Test_App_Domain_Without_Params(t *testing.T) {
+	t.Parallel()
+	app := New(Config{
+		EnableSubDomains: true,
+	})
+	subApp := app.Domain("blog.localhost:3000")
+	res, ok := app.SubDomains["blog.localhost:3000"]
+	// test for true
+	utils.AssertEqual(t, true, ok, "assert subdomain is set to blog.localhost:3000")
+	utils.AssertNotEqual(t, nil, res, "assert subdomain is set to blog.localhost:3000")
+	utils.AssertNotEqual(t, nil, subApp, "assert subdomain is set to blog.localhost:3000")
+}
+
+// go test -run Test_App_Domain_With_Parser -v
+func Test_App_Domain_With_Parser(t *testing.T) {
+	t.Parallel()
+	app := New(Config{
+		EnableSubDomains: true,
+	})
+	subApp := app.Domain(":author.blog.localhost:3000")
+	res, ok := app.SubDomains["blog.localhost:3000"]
+	utils.AssertNotEqual(t, nil, res)
+	utils.AssertEqual(t, "blog.localhost:3000", res.Route)
+	utils.AssertEqual(t, "author", res.Params[0])
+	utils.AssertNotEqual(t, nil, subApp)
+	utils.AssertEqual(t, true, ok)
+}
+
+// go test -run Benchmark_App_Domain_Without_Params -v
+func Benchmark_App_Domain_Without_Params(b *testing.B) {
+	app := New(Config{
+		EnableSubDomains: true,
+	})
+	var sub *App
+	for i := 0; i < b.N; i++ {
+		sub = app.Domain("blog.localhost:3000")
+	}
+	utils.AssertNotEqual(b, nil, sub)
+}
+
+// go test -run Benchmark_App_Domain_With_Params -v
+func Benchmark_App_Domain_With_Params(b *testing.B) {
+	app := New(Config{
+		EnableSubDomains: true,
+	})
+	var sub *App
+	for i := 0; i < b.N; i++ {
+		sub = app.Domain(":user.blog.localhost:3000")
+	}
+	utils.AssertNotEqual(b, nil, sub)
+}

@@ -5587,3 +5587,30 @@ func Test_Ctx_extractIPsFromHeader_EnableValidateIp(t *testing.T) {
 	res := ips[len(ips)-2]
 	utils.AssertEqual(t, "42.118.81.169", res)
 }
+
+// go test -run Test_Ctx_SubdomainParam -v
+// func Test_Ctx_SubdomainParam(t *testing.T) {
+// 	// Create a test context and set some strings (or params)
+// 	// create a fake app to be used within this test
+// 	t.Parallel()
+// 	app := New()
+
+// 	// Create some test endpoints
+
+// 	// For the user id I will use the number 1111, so I should be able to get the number
+// 	// 1111 from the Ctx
+// 	app.Get("/test/:user", func(c *Ctx) error {
+// 		// utils.AssertEqual(t, "john", c.Params("user"))
+
+// 		num, err := c.ParamsInt("user")
+
+// 		// Check the number matches
+// 		utils.AssertEqual(t, 1111, num)
+
+// 		// Check no errors are returned, because we want NO errors in this one
+// 		utils.AssertEqual(t, nil, err)
+
+// 		return nil
+// 	})
+
+// }

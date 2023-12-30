@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -84,6 +85,18 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// SubApps represents a app routed to by a subdomain and
+// its parameters
+type SubApps struct {
+	Route    string   // the constant segments of the subdomain
+	FiberApp *App     // the fiber app serving the subdomain
+	Params   []string // the params passed in the host name
+}
+
+// Subdomains a struct representing sub domains and a
+// list of its parameters
+type Hosts map[string]*SubApps
+
 // App denotes the Fiber application.
 type App struct {
 	mutex sync.Mutex
@@ -117,6 +130,8 @@ type App struct {
 	mountFields *mountFields
 	// Indicates if the value was explicitly configured
 	configured Config
+	// Map containig apps routed as subdomains
+	SubDomains Hosts
 }
 
 // Config is a struct holding the server settings.
@@ -397,6 +412,10 @@ type Config struct {
 	//
 	// Optional. Default: false
 	EnableSplittingOnParsers bool `json:"enable_splitting_on_parsers"`
+
+	// Boolean field used to determine if a app has subapps
+	// under it think subdomains
+	EnableSubDomains bool
 }
 
 // Static defines configuration options when defining static assets.
@@ -570,6 +589,9 @@ func New(config ...Config) *App {
 	}
 	if len(app.config.RequestMethods) == 0 {
 		app.config.RequestMethods = DefaultMethods
+	}
+	if app.config.EnableSubDomains {
+		app.SubDomains = make(map[string]*SubApps)
 	}
 
 	app.config.trustedProxiesMap = make(map[string]struct{}, len(app.config.TrustedProxies))
@@ -1115,4 +1137,29 @@ func (app *App) runOnListenHooks(listenData ListenData) {
 	if err := app.hooks.executeOnListenHooks(listenData); err != nil {
 		panic(err)
 	}
+}
+
+// Route subDomains to the appropirate app serving them
+func (app *App) Domain(domain string) *App {
+	subApp := New()
+	domSegs := strings.Split(domain, ".")
+	routes := make([]string, 0)
+	params := make([]string, 0)
+	host := &SubApps{
+		FiberApp: subApp,
+		Params:   params,
+	}
+	re := regexp.MustCompile(`^:`)
+	for _, seg := range domSegs {
+		if re.MatchString(seg) {
+			params = append(params, seg[1:])
+		} else {
+			routes = append(routes, seg)
+		}
+	}
+	host.Params = params
+	route := strings.Join(routes, ".")
+	host.Route = route
+	app.SubDomains[route] = host
+	return subApp
 }

@@ -1952,3 +1952,28 @@ func (*Ctx) isLocalHost(address string) bool {
 func (c *Ctx) IsFromLocal() bool {
 	return c.isLocalHost(c.fasthttp.RemoteIP().String())
 }
+
+// SubdomainParam - sets params parsed from the subdomain to a sub app
+func (c *Ctx) SubdomainParam(val string) {
+	idx := 0
+	// valLen := len(c.values) - 1
+	// parLen := len(c.route.Params) - 1
+	// // check to ensure the len
+	// switch {
+	// case parLen == valLen:
+	// 	idx = parLen
+	// case valLen > parLen:
+	// 	idx = valLen
+	// case parLen > valLen:
+	// 	idx = parLen
+	// // }
+	// add key to params
+	// c.route.Params = append(c.route.Params, key)
+	// add val to values
+	c.values[idx] = val
+}
+
+// for test purpose delete afterwards
+func (c *Ctx) RetriveValIdx0() string {
+	return c.values[0]
+}
